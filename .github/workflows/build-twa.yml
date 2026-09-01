@@ -22,57 +22,98 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install Bubblewrap and expect
-        run: |
-          npm install -g @bubblewrap/cli
-          sudo apt-get update -qq && sudo apt-get install -y -qq expect
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli
 
-      - name: Init TWA project (auto-answer all prompts)
+      - name: Init TWA project (Python pty - bulletproof)
+        timeout-minutes: 3
         run: |
           mkdir -p twa
-          expect -c '
-            set timeout 60
-            spawn npx @bubblewrap/cli init --manifest https://parazzi.vercel.app/manifest.json --directory ./twa
-            expect {
-              -re ".*" { send "\r"; exp_continue }
-              eof
-            }
-          '
+          python3 << 'PYEOF'
+          import pty, os, subprocess, select, time, sys
+
+          master, slave = pty.openpty()
+          p = subprocess.Popen(
+            ['npx', '@bubblewrap/cli', 'init',
+             '--manifest', 'https://parazzi.vercel.app/manifest.json',
+             '--directory', './twa'],
+            stdin=slave, stdout=slave, stderr=slave
+          )
+          os.close(slave)
+
+          answer_count = 0
+          while p.poll() is None and answer_count < 30:
+            ready, _, _ = select.select([master], [], [], 0.5)
+            if ready:
+              try:
+                data = os.read(master, 2048).decode(errors='ignore')
+                sys.stdout.write(data)
+                sys.stdout.flush()
+                if any(c in data for c in ['?', ':', '>']) and len(data.strip()) > 0:
+                  time.sleep(0.3)
+                  os.write(master, b'\n')
+                  answer_count += 1
+              except OSError:
+                break
+
+          os.close(master)
+          p.wait(timeout=30)
+          sys.exit(p.returncode)
+          PYEOF
+
+      - name: List TWA project files
+        run: ls -la twa/
 
       - name: Generate signing keystore
         run: |
           cd twa
-          keytool -genkey \
-            -v \
-            -keystore android.keystore \
-            -alias android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass android \
-            -keypass android \
-            -dname "CN=Parazzi"
+          keytool -genkey -v -keystore android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Parazzi"
 
-      - name: Build APK and AAB
+      - name: Build APK and AAB (Python pty)
+        timeout-minutes: 10
         run: |
           cd twa
-          expect -c '
-            set timeout 300
-            spawn npx @bubblewrap/cli build
-            expect {
-              -re ".*" { send "\r"; exp_continue }
-              eof
-            }
-          '
+          python3 << 'PYEOF'
+          import pty, os, subprocess, select, time, sys
+
+          master, slave = pty.openpty()
+          p = subprocess.Popen(
+            ['npx', '@bubblewrap/cli', 'build'],
+            stdin=slave, stdout=slave, stderr=slave
+          )
+          os.close(slave)
+
+          answer_count = 0
+          while p.poll() is None and answer_count < 20:
+            ready, _, _ = select.select([master], [], [], 0.5)
+            if ready:
+              try:
+                data = os.read(master, 2048).decode(errors='ignore')
+                sys.stdout.write(data)
+                sys.stdout.flush()
+                if any(c in data for c in ['?', ':', '>']) and len(data.strip()) > 0:
+                  time.sleep(0.3)
+                  os.write(master, b'\n')
+                  answer_count += 1
+              except OSError:
+                break
+
+          os.close(master)
+          p.wait(timeout=600)
+          sys.exit(p.returncode)
+          PYEOF
+
+      - name: Find built APK
+        run: find twa -name "*.apk" -o -name "*.aab"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: parazzi-apk
-          path: twa/app-release-signed.apk
+          path: twa/**/*.apk
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: parazzi-aab
-          path: twa/app-release-bundle.aab
+          path: twa/**/*.aab
