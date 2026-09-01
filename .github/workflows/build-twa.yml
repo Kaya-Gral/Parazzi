@@ -70,13 +70,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: parazzi-aab
-          path: twa/app-release-bundle.aab       uses: actions/upload-artifact@v4
-       with:
-         name: parazzi-apk
-         path: twa/app-release-signed.apk
-
-     - name: Upload AAB
-       uses: actions/upload-artifact@v4
-       with:
-         name: parazzi-aab
-         path: twa/app-release-bundle.aab
+          path: twa/app-release-bundle.aab
