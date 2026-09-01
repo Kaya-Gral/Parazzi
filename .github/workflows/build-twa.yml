@@ -11,40 +11,48 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
-      - name: Create TWA config manually
+      - name: Init TWA project (Python pty)
+        timeout-minutes: 5
         run: |
           mkdir -p twa
-          cat > twa/twa-manifest.json << 'CONFIG'
-          {
-            "packageId": "com.parazzi.twa",
-            "host": "parazzi.vercel.app",
-            "name": "Parazzi Pharmacy",
-            "launcherName": "Parazzi",
-            "themeColor": "#0d9488",
-            "navigationColor": "#0d9488",
-            "backgroundColor": "#f1f5f9",
-            "display": "standalone",
-            "orientation": "portrait",
-            "startUrl": "/?source=pwa",
-            "iconUrl": "https://parazzi.vercel.app/icon-512.png",
-            "maskableIconUrl": "https://parazzi.vercel.app/icon-512-maskable.png",
-            "splashScreenFadeOutDuration": 300,
-            "enableNotifications": true,
-            "shortcuts": [],
-            "signingKey": {
-              "path": "android.keystore",
-              "alias": "android"
-            }
-          }
-          CONFIG
+          python3 << 'PYEOF'
+          import pty, os, subprocess, select, time, sys
+
+          master, slave = pty.openpty()
+          env = os.environ.copy()
+          env['CI'] = 'true'
+          
+          p = subprocess.Popen(
+            ['npx', '@bubblewrap/cli', 'init',
+             '--manifest', 'https://parazzi.vercel.app/manifest.json',
+             '--directory', './twa'],
+            stdin=slave, stdout=slave, stderr=slave,
+            env=env
+          )
+          os.close(slave)
+
+          answer_count = 0
+          while p.poll() is None and answer_count < 100:
+            ready, _, _ = select.select([master], [], [], 0.5)
+            if ready:
+              try:
+                data = os.read(master, 4096).decode(errors='ignore')
+                sys.stdout.write(data)
+                sys.stdout.flush()
+                if any(c in data for c in ['?', ':', '>']) and len(data.strip()) > 0:
+                  time.sleep(0.5)
+                  os.write(master, b'\n')
+                  answer_count += 1
+              except OSError:
+                break
+
+          os.close(master)
+          p.wait(timeout=300)
+          sys.exit(p.returncode)
+          PYEOF
 
       - name: Generate signing keystore
         run: |
