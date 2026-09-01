@@ -12,6 +12,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup JDK
+        id: setup-java
         uses: actions/setup-java@v5
         with:
           java-version: '17'
@@ -52,22 +53,65 @@ jobs:
           }
           CONFIG
 
-      - name: Generate signing key
+      - name: Generate signing keystore
         run: |
           cd twa
           keytool -genkey -v -keystore android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Parazzi"
 
-      - name: Build APK and AAB
-        run: cd twa && npx @bubblewrap/cli build
+      - name: Build APK and AAB (Python pty)
+        timeout-minutes: 10
+        run: |
+          cd twa
+          python3 << 'PYEOF'
+          import pty, os, subprocess, select, time, sys
+
+          master, slave = pty.openpty()
+          env = os.environ.copy()
+          env['CI'] = 'true'
+          
+          p = subprocess.Popen(
+            ['npx', '@bubblewrap/cli', 'build'],
+            stdin=slave, stdout=slave, stderr=slave,
+            env=env
+          )
+          os.close(slave)
+
+          answer_count = 0
+          while p.poll() is None and answer_count < 50:
+            ready, _, _ = select.select([master], [], [], 0.5)
+            if ready:
+              try:
+                data = os.read(master, 4096).decode(errors='ignore')
+                sys.stdout.write(data)
+                sys.stdout.flush()
+                # KEY FIX: Answer "n" to JDK install prompt (we already have JDK 17)
+                if 'JDK' in data or 'jdk' in data:
+                  time.sleep(0.3)
+                  os.write(master, b'n\n')
+                  answer_count += 1
+                elif any(c in data for c in ['?', ':', '>', '(Y/n)']) and len(data.strip()) > 0:
+                  time.sleep(0.3)
+                  os.write(master, b'\n')
+                  answer_count += 1
+              except OSError:
+                break
+
+          os.close(master)
+          p.wait(timeout=600)
+          sys.exit(p.returncode)
+          PYEOF
+
+      - name: Find built APK
+        run: find twa -name "*.apk" -o -name "*.aab"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: parazzi-apk
-          path: twa/app-release-signed.apk
+          path: twa/**/*.apk
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: parazzi-aab
-          path: twa/app-release-bundle.aab
+          path: twa/**/*.aab
