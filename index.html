@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <link rel="preconnect" href="https://your-project.supabase.co" crossorigin>
+  <link rel="dns-prefetch" href="https://your-project.supabase.co">
+  <meta name="theme-color" content="#0d9488">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Parazzi</title>
+  <link rel="manifest" href="manifest.json?v=6">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css?v=6">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.3/dist/cdn.min.js"></script>
+
+  <!-- SW Update Detector — runs before main.js -->
+  <script>
+    window.__APP_VERSION = '6';
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js?v=6').then(reg => {
+        console.log('[SW] Registered:', reg.scope);
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              if (window.__onSWUpdate) window.__onSWUpdate();
+            }
+          });
+        });
+      }).catch(err => console.error('[SW] Registration failed:', err));
+
+      /* Force new SW to activate immediately */
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('[SW] New controller active');
+      });
+    }
+  </script>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+  <defs>
+    <symbol id="icon-medicine" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12 7v10" stroke-linecap="round"/><path d="M7 12h10" stroke-linecap="round"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="icon-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+    <symbol id="icon-minus" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+    <symbol id="icon-syringe" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+    <symbol id="icon-return" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></symbol>
+    <symbol id="icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="icon-back" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+    <symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+    <symbol id="icon-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+    <symbol id="icon-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+    <symbol id="icon-package" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12 11v8"/><path d="M8 15l4-4 4 4"/></symbol>
+    <symbol id="icon-log-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+    <symbol id="icon-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="icon-activity" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></symbol>
+    <symbol id="icon-sliders" viewBox="0 0 24 24"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></symbol>
+    <symbol id="icon-chevron-right" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+    <symbol id="icon-mail" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="icon-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
+    <symbol id="icon-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="icon-arrow-right" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+    <symbol id="icon-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+  </defs>
+</svg>
+
+  <div id="app">
+  <div id="splash">
+    <div class="splash-inner">
+      <div class="splash-logo">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12 7v10" stroke-linecap="round"/><path d="M7 12h10" stroke-linecap="round"/></svg>
+      </div>
+      <div class="splash-ring"></div>
+      <div class="splash-ring delay"></div>
+      <h2 class="splash-title">Parazzi</h2>
+      <p class="splash-sub">Pharmacy Management</p>
+      <div class="splash-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+    <!-- AUTH -->
+    <div class="auth-overlay" id="auth-overlay">
+      <div class="auth-bg"></div>
+      <div class="auth-bg-blur"></div>
+      <div class="auth-particles" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="auth-box">
+        <button class="lang-toggle" onclick="App.toggleLang()">
+          <span id="auth-lang">EN</span>
+        </button>
+        <div class="auth-brand">
+          <div class="auth-logo-ring">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12 7v10" stroke-linecap="round"/><path d="M7 12h10" stroke-linecap="round"/></svg>
+          </div>
+          <h1>Parazzi</h1>
+        </div>
+
+        <div class="auth-error" id="auth-error" style="display:none"></div>
+
+        <form id="login-form" onsubmit="App.login(event)">
+          <div class="field auth-field">
+            <label data-i18n="email">Email</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <input type="email" id="in-email" placeholder="pharmacist@center.com" required>
+            </div>
+          </div>
+          <div class="field auth-field">
+            <label data-i18n="password">Password</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="in-pass" placeholder="••••••••" required minlength="6">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-prime auth-btn" data-i18n="signIn">
+            <span>Sign In</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+          <p class="auth-switch"><span data-i18n="noAccount">No account?</span> <a onclick="App.showSignup()" data-i18n="signUp">Create one</a></p>
+        </form>
+
+        <form id="signup-form" class="hidden" onsubmit="App.signup(event)">
+          <div class="field auth-field">
+            <label data-i18n="centerName">Center Name</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <input type="text" id="up-center" placeholder="Your Center Name" required>
+            </div>
+          </div>
+          <div class="field auth-field">
+            <label data-i18n="fullName">Full Name</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input type="text" id="up-name" placeholder="Dr. Jane Doe" required>
+            </div>
+          </div>
+          <div class="field auth-field">
+            <label data-i18n="email">Email</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <input type="email" id="up-email" placeholder="pharmacist@center.com" required>
+            </div>
+          </div>
+          <div class="field auth-field">
+            <label data-i18n="password">Password</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="up-pass" placeholder="Min. 6 characters" required minlength="6">
+            </div>
+          </div>
+          <div class="field auth-field">
+            <label data-i18n="confirmPassword">Confirm Password</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="up-confirm" placeholder="Repeat password" required minlength="6">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-prime auth-btn" data-i18n="createAccount">
+            <span>Create Account</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+          <p class="auth-switch"><span data-i18n="hasAccount">Have an account?</span> <a onclick="App.showLogin()" data-i18n="signIn">Sign In</a></p>
+        </form>
+      </div>
+    </div>
+    <!-- UNLOCK OVERLAY -->
+    <div class="auth-overlay" id="unlock-overlay" style="display:none;z-index:550">
+      <div class="auth-bg"></div>
+      <div class="auth-bg-blur"></div>
+      <div class="auth-box" style="max-width:360px;padding:32px">
+        <div class="auth-brand" style="margin-bottom:24px">
+          <div class="auth-logo-ring" style="width:56px;height:56px;border-radius:16px">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12 7v10" stroke-linecap="round"/><path d="M7 12h10" stroke-linecap="round"/></svg>
+          </div>
+          <h1 style="font-size:22px">Parazzi</h1>
+          <p style="font-size:13px;color:var(--muted);margin-top:4px">Unlock to continue</p>
+        </div>
+        <div class="auth-error" id="unlock-error" style="display:none"></div>
+        <div class="field auth-field">
+          <label data-i18n="password">Password</label>
+          <div class="input-wrap">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="unlock-pass" placeholder="Enter your password" required minlength="6">
+          </div>
+        </div>
+        <button type="button" class="btn btn-prime auth-btn" onclick="App.unlock()">
+          <span>Unlock</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <p class="auth-switch"><a onclick="App.logout()">Log out instead</a></p>
+      </div>
+    </div>
+    <!-- CHECK-IN OVERLAY -->
+    <div class="auth-overlay" id="checkin-overlay" style="display:none;z-index:560">
+      <div class="auth-bg"></div>
+      <div class="auth-bg-blur"></div>
+      <div class="auth-box" style="max-width:360px;padding:32px;text-align:center">
+        <div class="auth-brand" style="margin-bottom:24px">
+          <div class="auth-logo-ring" style="width:56px;height:56px;border-radius:16px">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12 7v10" stroke-linecap="round"/><path d="M7 12h10" stroke-linecap="round"/></svg>
+          </div>
+          <h1 style="font-size:22px">Parazzi</h1>
+          <p style="font-size:13px;color:var(--muted);margin-top:4px" data-i18n="checkIn">Check In</p>
+        </div>
+        <p style="font-size:14px;color:var(--text);margin-bottom:24px;line-height:1.5" data-i18n="checkInDesc">Mark yourself as in service to begin your shift.</p>
+        <label class="checkin-toggle-wrap">
+          <input type="checkbox" id="checkin-toggle" onchange="App.onCheckInToggle()">
+          <span class="checkin-toggle-slider"></span>
+          <span class="checkin-toggle-label" data-i18n="inService">In Service</span>
+        </label>
+        <button type="button" class="btn btn-prime auth-btn" id="checkin-btn" onclick="App.confirmCheckIn()" disabled style="margin-top:20px">
+          <span data-i18n="beginShift">Begin Shift</span>
+        </button>
+      </div>
+    </div>
+    <!-- APP SHELL -->
+    <header class="topbar">
+      <span class="logo">Parazzi</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="sync-status" id="sync-status" data-i18n="offline">offline</span>
+        </div>
+    </header>
+
+    <main class="main" id="main">
+      <div class="main-slider">
+        <div class="main-track" id="main-track" style="transform:translateX(-25%)">
+          <!-- STOCK -->
+          <section class="view main-slide" id="view-stock">
+        <div class="search-wrap hidden" id="stock-search-wrap">
+          <div class="search-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="q-stock" data-i18n-placeholder="searchMed" placeholder="Search medicine..." oninput="App.debouncedRenderStock()">
+            <button class="search-close" onclick="App.toggleStockSearch()">✕</button>
+          </div>
+        </div>
+        <div class="chips" id="stock-chips">
+          <button class="chip search-chip" onclick="App.toggleStockSearch()" id="stock-search-chip" title="Search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+          <button class="chip" data-filter="low" onclick="App.setFilter('low')" data-i18n="chipLow">Low Stock</button>
+          <button class="chip" data-filter="out" onclick="App.setFilter('out')" data-i18n="chipOut">Out</button>
+          <button class="chip" data-filter="exp" onclick="App.setFilter('exp')" data-i18n="expiresSoon">Expiring</button>
+          <button class="chip" data-filter="expired" onclick="App.setFilter('expired')" data-i18n="chipExpired">Expired</button>
+        </div>
+        <div class="sec-head"><span data-i18n="myMedicines">My Medicines</span><button class="link" id="stock-add-btn" onclick="App.openMedSheet()" data-i18n="add">+ Add</button></div>
+        <div class="list" id="list-stock">
+          <div class="skeleton skel-card"></div>
+          <div class="skeleton skel-card"></div>
+          <div class="skeleton skel-card"></div>
+        </div>
+      </section>
+
+      <!-- SELL -->
+      <section class="view main-slide active" id="view-sell">
+        <div class="search-wrap hidden" id="sell-search-wrap">
+          <div class="search-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="q-sell" data-i18n-placeholder="searchMed" placeholder="Search medicine..." oninput="App.debouncedRenderSell()">
+            <button class="search-close" onclick="App.toggleSellSearch()">✕</button>
+          </div>
+        </div>
+        <div class="chips" id="sell-unit-chips" style="margin-bottom:12px">
+          <button class="chip search-chip" onclick="App.toggleSellSearch()" id="sell-search-chip" title="Search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
+          <button class="chip" data-unit="tablets" onclick="App.setSellUnitFilter('tablets')" data-i18n="unit_tablets">Tablets</button>
+          <button class="chip" data-unit="bottles" onclick="App.setSellUnitFilter('bottles')" data-i18n="unit_bottles">Bottles</button>
+          <button class="chip" data-unit="ampoules" onclick="App.setSellUnitFilter('ampoules')" data-i18n="unit_ampoules">Ampoules</button>
+          <button class="chip" data-unit="sachets" onclick="App.setSellUnitFilter('sachets')" data-i18n="unit_sachets">Sachets</button>
+          <button class="chip" data-unit="syrup" onclick="App.setSellUnitFilter('syrup')" data-i18n="unit_syrup">Syrup</button>
+          <button class="chip" data-unit="pieces" onclick="App.setSellUnitFilter('pieces')" data-i18n="unit_pieces">Pieces</button>
+        </div>
+        <div class="grid" id="grid-sell"></div>
+      </section>
+
+      <!-- ILLNESSES -->
+      <section class="view main-slide" id="view-illness">
+        <div class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="q-illness" data-i18n-placeholder="searchIll" placeholder="Search illness..." oninput="App.debouncedRenderIllnesses()">
+        </div>
+        <div class="sec-head"><span data-i18n="illnesses">Illnesses</span><button class="link" id="illness-add-btn" onclick="App.openIllSheet()" data-i18n="add">+ Add</button></div>
+        <p class="sub" data-i18n="illnessSub">Manage illness categories</p>
+        <div class="list" id="list-illness">
+          <div class="skeleton skel-ill"></div>
+          <div class="skeleton skel-ill"></div>
+          <div class="skeleton skel-ill"></div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="view main-slide" id="view-settings">
+        <div class="settings">
+          <div class="group">
+            <div class="profile-row" onclick="App.openProfile()" style="border:none;border-radius:0;border-bottom:1px solid var(--border)">
+              <div class="avatar" id="set-avatar">P</div>
+              <div class="meta">
+                <div class="name" id="set-name">Pharmacist</div>
+                <div class="email" id="set-email">email</div>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            <div class="row">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+              <span>Last Sync</span>
+              <span class="right" id="last-sync">-</span>
+            </div>
+          </div>
+
+          <div class="group">
+            <div class="row" id="staff-row" onclick="App.openManagement()" style="display:none">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></div>
+              <span data-i18n="management">Management</span>
+              <span class="right" data-i18n="manage">Manage</span>
+            </div>
+            <div class="row" id="role-row" style="display:none">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+              <span data-i18n="role">Role</span>
+              <span class="right" id="set-role">-</span>
+            </div>
+            <div class="row" onclick="App.toggleLang()">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg></div>
+              <span data-i18n="language">Language</span>
+              <span class="right" id="set-lang">English</span>
+            </div>
+            <div class="row" onclick="App.toggleTheme()">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
+              <span data-i18n="theme">Theme</span>
+              <span class="right" id="set-theme">Auto</span>
+            </div>
+            <div class="row">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+              <span data-i18n="lowStockAlert">Low Stock Alert</span>
+              <input type="number" class="right" id="set-alert" min="1" value="10" onchange="App.saveSettings()">
+            </div>
+          </div>
+
+          <div class="group">
+            <div class="row" onclick="App.openRecords()">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+              <span data-i18n="salesRecords">Sales Records</span>
+              <span class="right" id="set-records">0</span>
+            </div>
+            <div class="row" id="command-row" onclick="App.openCommand()">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12 11v8"/><path d="M8 15l4-4 4 4"/></svg></div>
+              <span data-i18n="commandMedicines">Command</span>
+              <span class="right">Order</span>
+            </div>
+          </div>
+
+          <div class="group">
+            <div class="row danger" onclick="App.logout()">
+              <div class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+              <span data-i18n="logOut">Log Out</span>
+            </div>
+          </div>
+        </div>
+      </section>
+        </div>
+      </div>
+    </main>
+
+    <!-- FLOATING CONFIRM -->
+    <button class="fab hidden" id="fab" onclick="App.openConfirm()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <span class="badge" id="fab-badge">0</span>
+    </button>
+
+    <!-- BOTTOM NAV -->
+    <nav class="nav">
+      <button class="nav-btn active" onclick="App.go('stock')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        <span data-i18n="stock">Stock</span>
+      </button>
+      <button class="nav-btn" onclick="App.go('sell')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span data-i18n="sell">Sell</span>
+      </button>
+      <button class="nav-btn" onclick="App.go('illness')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <span data-i18n="illnesses">Illnesses</span>
+      </button>
+      <button class="nav-btn" onclick="App.go('settings')">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span data-i18n="settings">Settings</span>
+      </button>
+    </nav>
+
+    <!-- STAFF MANAGEMENT ACTIVITY -->
+    <div class="activity" id="activity-staff">
+      <div class="act-header">
+        <button class="act-back" onclick="App.closeActivity('activity-staff')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="act-title" data-i18n="manageStaff">Manage Staff</div>
+        <div style="width:40px"></div>
+      </div>
+      <div class="act-body">
+        <div class="list" id="staff-list"></div>
+      </div>
+    </div>
+
+    <!-- MANAGEMENT ACTIVITY -->
+    <div class="activity" id="activity-management">
+      <div class="act-header">
+        <button class="act-back" onclick="App.closeActivity('activity-management')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="act-title" data-i18n="management">Management</div>
+        <div style="width:40px"></div>
+      </div>
+      <div class="act-body">
+        <div class="mgmt-grid">
+
+          <div class="mgmt-card" onclick="App.openSuppliers()">
+            <div class="mgmt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></div>
+            <div class="mgmt-label">Suppliers</div>
+          </div>
+          <div class="mgmt-card" onclick="App.openActivityReport()">
+            <div class="mgmt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <div class="mgmt-label" id="mgmt-ar-label" data-i18n="activityReport">Activity Report</div>
+            <div class="mgmt-status" id="mgmt-ar-status">Disabled</div>
+          </div>
+          <div class="mgmt-card" onclick="App.openStaffFromManagement()">
+            <div class="mgmt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="mgmt-label" id="mgmt-staff-label" data-i18n="manageStaff">Manage Staff</div>
+          </div>
+        </div>
+        <div class="in-service-section">
+          <div class="in-service-header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span data-i18n="inService">In Service</span>
+          </div>
+          <div class="in-service-list" id="in-service-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECORDS ACTIVITY -->
+    <div class="activity" id="activity-records">
+      <div class="act-header">
+        <button class="act-back" onclick="App.closeActivity('activity-records')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="act-title" data-i18n="salesRecords">Sales Records</div>
+        <div style="width:40px"></div>
+      </div>
+      <div class="act-body">
+        <div class="summary" id="rec-summary"></div>
+        <div class="rec-tabs" style="margin-bottom:16px" id="rec-tabs">
+          <button class="rec-tab active" data-tab="analytics" onclick="App.setRecTab('analytics')" data-i18n="tabAnalytics" id="rec-tab-analytics">Analytics</button>
+          <button class="rec-tab" data-tab="sales" onclick="App.setRecTab('sales')" data-i18n="tabSales" id="rec-tab-sales">Sales</button>
+          <button class="rec-tab" data-tab="returns" onclick="App.setRecTab('returns')" data-i18n="tabReturns" id="rec-tab-returns">Returns</button>
+        </div>
+        
+        <div class="list" id="rec-list">
+          <div class="skeleton skel-rec"></div>
+          <div class="skeleton skel-rec"></div>
+          <div class="skeleton skel-rec"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- COMMAND ACTIVITY -->
+    <div class="activity" id="activity-command">
+      <div class="act-header">
+        <button class="act-back" onclick="App.closeCommand()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="act-title" data-i18n="commandMedicines">Command</div>
+        <div style="width:40px"></div>
+      </div>
+      <div class="act-body" id="command-body">
+        <div class="cmd-swipe-indicator" id="cmd-swipe-indicator">
+          <span class="cmd-dot active" data-tab="new"></span>
+          <span class="cmd-dot" data-tab="history"></span>
+        </div>
+        <div class="cmd-slider">
+          <div class="cmd-slider-track" id="cmd-track">
+            <div id="command-new" class="cmd-slide">
+              <div class="search-wrap hidden" id="cmd-search-wrap">
+                <div class="search-row">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input type="text" id="q-command" data-i18n-placeholder="searchMed" placeholder="Search medicine..." oninput="App.renderCommand()">
+                  <button class="search-close" onclick="App.toggleCmdSearch()">✕</button>
+                </div>
+              </div>
+              <div class="chips" id="cmd-chips" style="margin-bottom:12px">
+                <button class="chip search-chip" onclick="App.toggleCmdSearch()" id="cmd-search-chip" title="Search">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </button>
+                <button class="chip" onclick="App.setCmdUnitFilter('tablets')" data-unit="tablets" data-i18n="unit_tablets">Tablets</button>
+                <button class="chip" onclick="App.setCmdUnitFilter('bottles')" data-unit="bottles" data-i18n="unit_bottles">Bottles</button>
+                <button class="chip" onclick="App.setCmdUnitFilter('ampoules')" data-unit="ampoules" data-i18n="unit_ampoules">Ampoules</button>
+                <button class="chip" onclick="App.setCmdUnitFilter('sachets')" data-unit="sachets" data-i18n="unit_sachets">Sachets</button>
+                <button class="chip" onclick="App.setCmdUnitFilter('syrup')" data-unit="syrup" data-i18n="unit_syrup">Syrup</button>
+                <button class="chip" onclick="App.setCmdUnitFilter('pieces')" data-unit="pieces" data-i18n="unit_pieces">Pieces</button>
+              </div>
+              <div class="list" id="command-list"></div>
+            </div>
+            <div id="command-history" class="cmd-slide">
+              <div class="list" id="command-orders-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="fab act-fab hidden" id="cmd-fab" onclick="App.openOrderConfirm()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span class="badge" id="cmd-fab-badge">0</span>
+      </button>
+    </div>
+    <!-- SHEETS -->
+    <div class="overlay" id="sheet-confirm">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 data-i18n="confirmSale">Confirm Sale</h3><button class="close" onclick="App.closeSheet('sheet-confirm')">&times;</button></div>
+        <div class="sheet-body">
+          <div class="big-total" id="confirm-total">0 FCFA</div>
+          <div class="confirm-list" id="confirm-list"></div>
+          <button class="btn btn-prime" onclick="App.confirmSale()" data-i18n="confirm">Confirm</button>
+          <button class="btn btn-ghost" onclick="App.clearCart()" data-i18n="clearCart">Clear Cart</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="sheet-med">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 id="med-title" data-i18n="addMedicine">Add Medicine</h3><button class="close" onclick="App.closeSheet('sheet-med')">&times;</button></div>
+        <div class="sheet-body">
+          <input type="hidden" id="med-id">
+
+          <div class="field"><label data-i18n="medicineName">Name</label><input type="text" id="med-name"></div>
+          <div class="field"><label data-i18n="dosage">Dosage</label><input type="text" id="med-dose" data-i18n-placeholder="eg500mg" placeholder="e.g. 500mg"></div>
+          <div class="row2">
+            <div class="field"><label data-i18n="sellPrice">Sell (FCFA)</label><input type="number" id="med-price"></div>
+            <div class="field" id="med-cost-wrap"><label data-i18n="cost">Cost (FCFA)</label><input type="number" id="med-cost"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label data-i18n="quantity">Stock</label><input type="number" id="med-stock" value="0"></div>
+            <div class="field"><label data-i18n="unit">Unit</label>
+              <select id="med-unit"></select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field"><label data-i18n="batchNumber">Batch Number</label><input type="text" id="med-batch" placeholder="LOT-001"></div>
+            <div class="field"><label data-i18n="expiryDate">Expiry Date</label><input type="date" id="med-expiry"></div>
+          </div>
+
+          <div class="field"><label data-i18n="forIllnesses">For Illnesses</label><div class="checks" id="med-ills"></div></div>
+          <button class="btn btn-prime" onclick="App.saveMed()" data-i18n="save">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="sheet-ill">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 id="ill-title" data-i18n="addIllness">Add Illness</h3><button class="close" onclick="App.closeSheet('sheet-ill')">&times;</button></div>
+        <div class="sheet-body">
+          <input type="hidden" id="ill-id">
+          <div class="field"><label data-i18n="illnessName">Name</label><input type="text" id="ill-name"></div>
+          <div class="field">
+            <label data-i18n="refMeds">Reference Medicines</label>
+            <div id="ref-list"></div>
+            <button class="btn btn-ghost btn-sm" onclick="App.showRefForm()" data-i18n="addRef">+ Add</button>
+            <div class="hidden" id="ref-form">
+              <input type="text" id="ref-name" placeholder="Name" style="margin-bottom:6px">
+              <input type="number" id="ref-price" placeholder="Price (optional)" style="margin-bottom:6px">
+              <div class="row2">
+                <button class="btn btn-prime btn-sm" onclick="App.addRef()">Add</button>
+                <button class="btn btn-ghost btn-sm" onclick="App.hideRefForm()" data-i18n="cancel">Cancel</button>
+              </div>
+            </div>
+          </div>
+          <div class="field"><label data-i18n="cureMeds">Cure Medicines</label><div class="checks" id="ill-meds"></div></div>
+          <button class="btn btn-prime" onclick="App.saveIll()" data-i18n="save">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="sheet-ill-detail">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 id="ill-detail-title">Illness</h3><button class="close" onclick="App.closeSheet('sheet-ill-detail')">&times;</button></div>
+        <div class="sheet-body">
+          <p class="sub" id="ill-detail-sub"></p>
+          <div id="ill-detail-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="sheet-profile">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 data-i18n="profile">Profile</h3><button class="close" onclick="App.closeSheet('sheet-profile')">&times;</button></div>
+        <div class="sheet-body center">
+          <div class="avatar-lg" id="prof-avatar">P</div>
+          <div class="prof-name" id="prof-name">Name</div>
+          <div class="prof-center" id="prof-center">Center</div>
+          <div class="prof-email" id="prof-email">email</div>
+          <div class="divider"></div>
+          <div class="kv"><span data-i18n="centerName">Center</span><b id="kv-center">-</b></div>
+          <div class="kv"><span data-i18n="fullName">Name</span><b id="kv-name">-</b></div>
+          <div class="kv"><span data-i18n="email">Email</span><b id="kv-email">-</b></div>
+          <div class="kv"><span data-i18n="memberSince">Member Since</span><b id="kv-date">-</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="sheet-record">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 data-i18n="saleDetails">Sale Details</h3><button class="close" onclick="App.closeSheet('sheet-record')">&times;</button></div>
+        <div class="sheet-body">
+          <div class="rec-date" id="rd-date"></div>
+          <div class="rec-time" id="rd-time"></div>
+          <div id="rd-list"></div>
+          <div class="rec-total" id="rd-total"></div>
+          <button class="btn btn-ghost" id="rd-return-btn" style="margin-top:12px;display:none" data-i18n="returnSale">Return Sale</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RETURN SHEET -->
+    <div class="overlay" id="sheet-return">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 id="return-title" data-i18n="processReturn">Process Return</h3><button class="close" onclick="App.closeSheet('sheet-return')">&times;</button></div>
+        <div class="sheet-body">
+          <input type="hidden" id="return-sale-id">
+          <p class="sub" style="margin-bottom:12px" data-i18n="returnReason">Select items and reason</p>
+          <div id="return-list"></div>
+          <div style="margin:16px 0 8px;font-size:13px;font-weight:700;color:var(--muted)" data-i18n="returnReason">Return Reason</div>
+          <div class="checks" id="return-reason"></div>
+          <div id="return-restock-wrap" style="margin-top:12px"></div>
+          <div class="big-total" id="return-total" style="font-size:22px;padding:12px 0">0 FCFA</div>
+          <button class="btn btn-prime" onclick="App.submitReturn()" data-i18n="confirm">Confirm Return</button>
+          <button class="btn btn-ghost" onclick="App.closeSheet('sheet-return')" data-i18n="cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMAND CONFIRM SHEET -->
+    <!-- STAFF DETAIL SHEET -->
+    <div class="overlay" id="sheet-staff-detail">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 data-i18n="profile">Profile</h3><button class="close" onclick="App.closeSheet('sheet-staff-detail')">&times;</button></div>
+        <div class="sheet-body">
+          <div class="sd-header">
+            <div class="sd-avatar" id="sd-avatar">S</div>
+            <div class="sd-header-info">
+              <div class="sd-name" id="sd-name">Name</div>
+              <div class="sd-status-badge approved" id="sd-status">Approved</div>
+            </div>
+          </div>
+          <div class="sd-divider"></div>
+          <div class="sd-kv"><span data-i18n="email">Email</span><b id="sd-email">-</b></div>
+          <div class="sd-kv"><span data-i18n="role">Role</span><b id="sd-role">-</b></div>
+          <div class="sd-kv"><span data-i18n="memberSince">Member Since</span><b id="sd-date">-</b></div>
+          <div class="sd-divider"></div>
+          <button class="btn sd-revoke-btn" id="sd-revoke-btn" data-i18n="revoke">Revoke</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="sheet-command-confirm">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 data-i18n="placeOrder">Place Order</h3><button class="close" onclick="App.closeSheet('sheet-command-confirm')">&times;</button></div>
+        <div class="sheet-body">
+          <p class="sub" style="text-align:center;margin-bottom:16px" data-i18n="reviewOrder">Review your order before submitting</p>
+          <div class="confirm-list" id="cmd-confirm-list"></div>
+          <div class="big-total" id="cmd-confirm-total">0 FCFA</div>
+          <p class="sub" id="cmd-min-hint" style="text-align:center;color:var(--d);font-weight:600;display:none" data-i18n="minOrder">Minimum order: 5,000 FCFA</p>
+          <button class="btn btn-prime" id="cmd-submit-btn" onclick="App.submitOrder()" data-i18n="placeOrder">Place Order</button>
+          <button class="btn btn-ghost" onclick="App.closeSheet('sheet-command-confirm')" data-i18n="cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <!-- PRICE SET SHEET -->
+    <div class="overlay" id="sheet-price-set">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 data-i18n="setPrices">Set Prices</h3><button class="close" onclick="App.closeSheet('sheet-price-set')">&times;</button></div>
+        <div class="sheet-body">
+          <p class="sub" style="text-align:center;margin-bottom:16px" data-i18n="priceFor">Set sell prices for received medicines</p>
+          <div id="price-set-list"></div>
+          <button class="btn btn-prime" onclick="App.savePricesAndReceive()" data-i18n="save">Save & Receive</button>
+          <button class="btn btn-ghost" onclick="App.closeSheet('sheet-price-set')" data-i18n="cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+
+        <!-- RECEIVE ORDER PRICE SETUP -->
+    <div class="activity" id="activity-receive">
+      <div class="act-header" style="justify-content:center">
+        <div class="act-title" style="text-align:center">Set Sell Price</div>
+      </div>
+      <div class="act-body" style="padding-bottom:100px">
+        <div id="receive-container"></div>
+      </div>
+      <div class="setup-footer-bar" style="display:flex;gap:12px;padding:16px">
+        <button class="btn btn-prime" id="receive-save-btn" onclick="App.saveReceivePrices()" data-i18n="save" style="flex:1">Save</button>
+      </div>
+    </div>
+
+    <!-- ACTIVITY REPORT DESCRIPTION OVERLAY -->
+    <div class="overlay" id="sheet-activity-report">
+      <div class="modal-card">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 data-i18n="activityReport">Activity Report</h3><button class="close" onclick="App.closeSheet('sheet-activity-report')">&times;</button></div>
+        <div class="sheet-body center" style="padding-bottom:24px">
+          <div class="ar-desc">
+            <p data-i18n="activityReportDesc2">Activity Report tracks when each staff member opens the app, makes sales, or updates stock. For busy doctors and pharmacy owners, this means no more guessing: you can see at a glance who is on duty, when they last checked in, and how active they have been during their shift.</p>
+            <p data-i18n="activityReportDesc3">Perfect for multi-staff pharmacies where you cannot be on the floor all day. Stay informed, even when you are away.</p>
+          </div>
+          <button class="btn btn-prime" id="ar-toggle-btn" onclick="App.toggleActivityReport()" data-i18n="activate">Activate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUPPLIERS ACTIVITY -->
+    <div class="activity" id="activity-suppliers">
+      <div class="act-header">
+        <button class="act-back" onclick="App.closeActivity('activity-suppliers')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="act-title">Suppliers</div>
+        <div style="width:40px"></div>
+      </div>
+      <div class="act-body">
+        <div class="sec-head"><span>Supplier Directory</span><button class="link" onclick="App.openSupplierSheet()">+ Add</button></div>
+        <div class="list" id="supplier-list">
+          <div class="skeleton skel-rec"></div>
+          <div class="skeleton skel-rec"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUPPLIER SHEET -->
+    <div class="overlay" id="sheet-supplier">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><h3 id="supplier-title">Add Supplier</h3><button class="close" onclick="App.closeSheet('sheet-supplier')">&times;</button></div>
+        <div class="sheet-body">
+          <input type="hidden" id="supplier-id">
+          <div class="field"><label>Name</label><input type="text" id="supplier-name" placeholder="PharmaDistri"></div>
+          <div class="field"><label>Contact</label><input type="text" id="supplier-contact" placeholder="+237 677 123 456"></div>
+          <div class="field"><label>Email</label><input type="email" id="supplier-email" placeholder="orders@supplier.cm"></div>
+          <div class="field"><label>Address</label><input type="text" id="supplier-address" placeholder="Douala, Akwa"></div>
+          <button class="btn btn-prime" onclick="App.saveSupplier()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUDIT LOG ACTIVITY -->
+    <div id="toasts"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+  <script src="db.js"></script>
+  <script src="app.js?v=6"></script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+{
+  "id": "./",
+  "name": "Parazzi Pharmacy",
+  "short_name": "Parazzi",
+  "description": "Pharmacy stock management, sales tracking, and staff activity reports. Works offline without downloads.",
+  "start_url": "./?source=pwa",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#0d9488",
+  "orientation": "portrait-primary",
+  "scope": "./",
+  "categories": [
+    "business",
+    "productivity",
+    "health"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Sale",
+      "short_name": "Sell",
+      "description": "Start a new sale immediately",
+      "url": "./?action=sell",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Check Stock",
+      "short_name": "Stock",
+      "description": "View low stock medicines",
+      "url": "./?filter=low",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Activity Report",
+      "short_name": "Report",
+      "description": "View staff activity and sales analytics",
+      "url": "./?view=reports",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}
