@@ -22,43 +22,48 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
+      - name: Install Bubblewrap and expect
+        run: |
+          npm install -g @bubblewrap/cli
+          sudo apt-get update -qq && sudo apt-get install -y -qq expect
 
-      - name: Create TWA config manually
+      - name: Init TWA project (auto-answer all prompts)
         run: |
           mkdir -p twa
-          cat > twa/twa-manifest.json << 'CONFIG'
-          {
-            "packageId": "com.parazzi.twa",
-            "host": "parazzi.vercel.app",
-            "name": "Parazzi Pharmacy",
-            "launcherName": "Parazzi",
-            "themeColor": "#0d9488",
-            "navigationColor": "#0d9488",
-            "backgroundColor": "#f1f5f9",
-            "display": "standalone",
-            "orientation": "portrait",
-            "startUrl": "/?source=pwa",
-            "iconUrl": "https://parazzi.vercel.app/icon-512.png",
-            "maskableIconUrl": "https://parazzi.vercel.app/icon-512-maskable.png",
-            "splashScreenFadeOutDuration": 300,
-            "enableNotifications": true,
-            "shortcuts": [],
-            "signingKey": {
-              "path": "android.keystore",
-              "alias": "android"
+          expect -c '
+            set timeout 60
+            spawn npx @bubblewrap/cli init --manifest https://parazzi.vercel.app/manifest.json --directory ./twa
+            expect {
+              -re ".*" { send "\r"; exp_continue }
+              eof
             }
-          }
-          CONFIG
+          '
 
-      - name: Generate signing key
+      - name: Generate signing keystore
         run: |
           cd twa
-          keytool -genkey -v -keystore android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Parazzi"
+          keytool -genkey \
+            -v \
+            -keystore android.keystore \
+            -alias android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Parazzi"
 
       - name: Build APK and AAB
-        run: cd twa && npx @bubblewrap/cli build
+        run: |
+          cd twa
+          expect -c '
+            set timeout 300
+            spawn npx @bubblewrap/cli build
+            expect {
+              -re ".*" { send "\r"; exp_continue }
+              eof
+            }
+          '
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
