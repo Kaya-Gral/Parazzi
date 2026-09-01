@@ -1,45 +1,46 @@
 name: Build TWA
 
 on:
-  push:
-    branches: [main]
+ push:
+   branches: [main]
+ workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+ build:
+   runs-on: ubuntu-latest
+   steps:
+     - uses: actions/checkout@v4
 
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+     - name: Setup JDK
+       uses: actions/setup-java@v5
+       with:
+         java-version: '17'
+         distribution: 'temurin'
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+     - name: Setup Node.js
+       uses: actions/setup-node@v4
+       with:
+         node-version: '22'
 
-      - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
+     - name: Install Bubblewrap
+       run: npm install -g @bubblewrap/cli
 
-      - name: Init TWA project
-        run: |
-          mkdir -p twa
-          bubblewrap init --manifest https://parazzi.vercel.app --directory ./twa --skip-prompts
+     - name: Init TWA project (non-interactive)
+       run: |
+         mkdir -p twa
+         printf '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n' | npx @bubblewrap/cli init --manifest https://parazzi.vercel.app/manifest.json --directory ./twa
 
-      - name: Build APK and AAB
-        run: cd twa && bubblewrap build
+     - name: Build APK and AAB
+       run: cd twa && npx @bubblewrap/cli build
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: parazzi-apk
-          path: twa/app-release-signed.apk
+     - name: Upload APK
+       uses: actions/upload-artifact@v4
+       with:
+         name: parazzi-apk
+         path: twa/app-release-signed.apk
 
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: parazzi-aab
-          path: twa/app-release-bundle.aab
+     - name: Upload AAB
+       uses: actions/upload-artifact@v4
+       with:
+         name: parazzi-aab
+         path: twa/app-release-bundle.aab
