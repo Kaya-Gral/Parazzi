@@ -1,40 +1,76 @@
 name: Build TWA
 
 on:
- push:
-   branches: [main]
- workflow_dispatch:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
- build:
-   runs-on: ubuntu-latest
-   steps:
-     - uses: actions/checkout@v4
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-     - name: Setup JDK
-       uses: actions/setup-java@v5
-       with:
-         java-version: '17'
-         distribution: 'temurin'
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-     - name: Setup Node.js
-       uses: actions/setup-node@v4
-       with:
-         node-version: '22'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-     - name: Install Bubblewrap
-       run: npm install -g @bubblewrap/cli
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli
 
-     - name: Init TWA project (non-interactive)
-       run: |
-         mkdir -p twa
-         printf '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n' | npx @bubblewrap/cli init --manifest https://parazzi.vercel.app/manifest.json --directory ./twa
+      - name: Create TWA config manually
+        run: |
+          mkdir -p twa
+          cat > twa/twa-manifest.json << 'CONFIG'
+          {
+            "packageId": "com.parazzi.twa",
+            "host": "parazzi.vercel.app",
+            "name": "Parazzi Pharmacy",
+            "launcherName": "Parazzi",
+            "themeColor": "#0d9488",
+            "navigationColor": "#0d9488",
+            "backgroundColor": "#f1f5f9",
+            "display": "standalone",
+            "orientation": "portrait",
+            "startUrl": "/?source=pwa",
+            "iconUrl": "https://parazzi.vercel.app/icon-512.png",
+            "maskableIconUrl": "https://parazzi.vercel.app/icon-512-maskable.png",
+            "splashScreenFadeOutDuration": 300,
+            "enableNotifications": true,
+            "shortcuts": [],
+            "signingKey": {
+              "path": "android.keystore",
+              "alias": "android"
+            }
+          }
+          CONFIG
 
-     - name: Build APK and AAB
-       run: cd twa && npx @bubblewrap/cli build
+      - name: Generate signing key
+        run: |
+          cd twa
+          keytool -genkey -v -keystore android.keystore -alias android -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Parazzi"
 
-     - name: Upload APK
-       uses: actions/upload-artifact@v4
+      - name: Build APK and AAB
+        run: cd twa && npx @bubblewrap/cli build
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: parazzi-apk
+          path: twa/app-release-signed.apk
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: parazzi-aab
+          path: twa/app-release-bundle.aab       uses: actions/upload-artifact@v4
        with:
          name: parazzi-apk
          path: twa/app-release-signed.apk
